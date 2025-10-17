@@ -5,10 +5,15 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.socialmessenger.databinding.ActivityChatListBinding
+import com.google.gson.Gson
 
 class ChatListActivity : AppCompatActivity() {
     lateinit var binding: ActivityChatListBinding
+    private var gson: Gson = Gson()
+    private var roomList = mutableListOf<ChatList>()
+    private lateinit var adapter: ChatListAdapter
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -19,5 +24,12 @@ class ChatListActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+        setupRecyclerView()
+    }
+
+    private fun setupRecyclerView() {
+        adapter = ChatListAdapter(roomList)
+        binding.rvChatList.layoutManager = LinearLayoutManager(this)
+        binding.rvChatList.adapter = adapter
     }
 }

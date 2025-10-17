@@ -1,6 +1,6 @@
 package com.example.socialmessenger
 
 data class ChatList (
-    val chatList: String,
+    val chatName: String,
     val lastMessage: String
 )
