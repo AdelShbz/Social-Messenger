@@ -25,6 +25,11 @@ class ChatListActivity : AppCompatActivity() {
             insets
         }
         setupRecyclerView()
+//        val chatlist1 = ChatList("ali", "hello, how are you?")
+//        roomList.add(chatlist1)
+//        roomList.add(chatlist1)
+//        roomList.add(chatlist1)
+//        adapter.notifyDataSetChanged()
     }
 
     private fun setupRecyclerView() {
