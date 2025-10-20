@@ -56,9 +56,9 @@ class AuthActivity : AppCompatActivity() {
                         if (response.isSuccessful) {
                             val res = gson.fromJson(response.body()?.string() , AuthResponse::class.java)
                             if (res.msg == "done"){
-//                                val intent = Intent(this@AuthActivity, MainActivity::class.java)
-//                                intent.putExtra("TOKEN",res.token)
-//                                startActivity(intent)
+                                val intent = Intent(this@AuthActivity, ChatListActivity::class.java)
+                                intent.putExtra("TOKEN",res.token)
+                                startActivity(intent)
                                 Toast.makeText(this@AuthActivity,res.msg,Toast.LENGTH_LONG).show()
                             } else {
                                 Toast.makeText(this@AuthActivity,res.msg,Toast.LENGTH_LONG).show()
@@ -80,9 +80,9 @@ class AuthActivity : AppCompatActivity() {
                         if (response.isSuccessful) {
                             val res = gson.fromJson(response.body()?.string() , AuthResponse::class.java)
                             if (res.msg == "done"){
-//                                val intent = Intent(this@AuthActivity, MainActivity::class.java)
-//                                intent.putExtra("TOKEN", res.token)
-//                                startActivity(intent)
+                                val intent = Intent(this@AuthActivity, ChatListActivity::class.java)
+                                intent.putExtra("TOKEN", res.token)
+                                startActivity(intent)
                                 Toast.makeText(this@AuthActivity,res.msg,Toast.LENGTH_LONG).show()
                             } else {
 //                                res.msg
