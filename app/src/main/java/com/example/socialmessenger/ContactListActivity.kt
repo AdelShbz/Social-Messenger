@@ -23,6 +23,7 @@ class ContactListActivity : AppCompatActivity() {
     private lateinit var adapter: ContactAdapter
     private val apiService = RetrofitClient.instance
     lateinit var token: String
+    lateinit var self_username: String
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -35,6 +36,7 @@ class ContactListActivity : AppCompatActivity() {
         }
 
         token = intent.getStringExtra("TOKEN").toString()
+        self_username = intent.getStringExtra("USERNAME").toString()
         Toast.makeText(this, token, Toast.LENGTH_LONG).show()
         apiService.getContactList().enqueue(object : Callback<ResponseBody>{
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
@@ -61,7 +63,7 @@ class ContactListActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        adapter = ContactAdapter(contactList, this@ContactListActivity, token)
+        adapter = ContactAdapter(contactList, this@ContactListActivity, token, self_username)
         binding.rvContact.layoutManager = LinearLayoutManager(this)
         binding.rvContact.adapter = adapter
     }

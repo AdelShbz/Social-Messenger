@@ -10,7 +10,8 @@ import com.example.socialmessenger.databinding.ItemContactBinding
 class ContactAdapter(
     private val items: List<ContactList>,
     private val activity: AppCompatActivity,
-    private val token: String):
+    private val token: String,
+    private val self_username: String):
     RecyclerView.Adapter<ContactAdapter.ContactViewHolder>(){
     class ContactViewHolder(private val binding: ItemContactBinding) :
         RecyclerView.ViewHolder(binding.root) {
@@ -30,6 +31,8 @@ class ContactAdapter(
         holder.bind(conName, fun (){
             val intentToMainActivity = Intent(activity, MainActivity::class.java)
             intentToMainActivity.putExtra("TOKEN",token)
+            intentToMainActivity.putExtra("SELF_USERNAME",self_username)
+            intentToMainActivity.putExtra("OTHER_USERNAME", conName)
             activity.startActivity(intentToMainActivity)
         })
     }

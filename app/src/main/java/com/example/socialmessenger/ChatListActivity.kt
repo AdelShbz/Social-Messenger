@@ -2,6 +2,7 @@ package com.example.socialmessenger
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -16,6 +17,7 @@ class ChatListActivity : AppCompatActivity() {
     private var roomList = mutableListOf<ChatList>()
     private lateinit var adapter: ChatListAdapter
     lateinit var token:String
+    lateinit var username: String
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -27,6 +29,8 @@ class ChatListActivity : AppCompatActivity() {
             insets
         }
         token = intent.getStringExtra("TOKEN").toString()
+        username = intent.getStringExtra("USERNAME").toString()
+        Toast.makeText(this, username, Toast.LENGTH_LONG).show()
         setupRecyclerView()
 //        val chatlist1 = ChatList("ali", "hello, how are you?")
 //        roomList.add(chatlist1)
@@ -37,6 +41,7 @@ class ChatListActivity : AppCompatActivity() {
         binding.buttonAdd.setOnClickListener {
             val intentToContactlist = Intent(this@ChatListActivity, ContactListActivity::class.java)
             intentToContactlist.putExtra("TOKEN", token)
+            intentToContactlist.putExtra("USERNAME", username)
             startActivity(intentToContactlist)
         }
 

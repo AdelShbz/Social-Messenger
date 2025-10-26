@@ -58,6 +58,7 @@ class AuthActivity : AppCompatActivity() {
                             if (res.msg == "done"){
                                 val intent = Intent(this@AuthActivity, ChatListActivity::class.java)
                                 intent.putExtra("TOKEN",res.token)
+                                intent.putExtra("USERNAME",res.username)
                                 startActivity(intent)
                             } else {
                                 Toast.makeText(this@AuthActivity,res.msg,Toast.LENGTH_LONG).show()
@@ -81,6 +82,7 @@ class AuthActivity : AppCompatActivity() {
                             if (res.msg == "done"){
                                 val intent = Intent(this@AuthActivity, ChatListActivity::class.java)
                                 intent.putExtra("TOKEN", res.token)
+                                intent.putExtra("USERNAME", res.username)
                                 startActivity(intent)
                             } else {
 //                                res.msg

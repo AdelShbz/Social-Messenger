@@ -20,6 +20,10 @@ class MainActivity : AppCompatActivity() {
     lateinit var viewModel: MyViewModel
     private val chatList = mutableListOf<Chat>()
     private lateinit var adapter: ChatAdapter
+    private val members = mutableListOf<String>()
+    private val chats = mutableListOf<Chat>()
+    lateinit var self_username: String
+    lateinit var other_username: String
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -30,38 +34,51 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+        self_username = intent.getStringExtra("SELF_USERNAME").toString()
+        other_username = intent.getStringExtra("OTHER_USERNAME").toString()
         socket = IO.socket(SOCKET_URL)
         socket?.connect()
         setupRecyclerView()
         viewModel = ViewModelProvider(this).get(MyViewModel::class.java)
-        viewModel.newText.observe(this) { newText ->
-            val chat  = Chat(newText.toString())
-            val jsonChat = Gson().toJson(chat, Chat::class.java)
-            socket?.emit(CHAT_KEYS.NEW_MESSAGE, jsonChat)
-        }
-        binding.btnSend.setOnClickListener {
-            val message = binding.etText.text.toString()
-            if (message.isEmpty()) return@setOnClickListener
-            viewModel.setNewText(message)
-            binding.etText.setText("")
-        }
+        members.add(self_username)
+        members.add(other_username)
+        val room = Room("private", members, chats)
+        val jsonRoom = Gson().toJson(room, Room::class.java)
+        socket?.emit(CHAT_KEYS.GET_ROOM, jsonRoom)
 
-        socket?.on(CHAT_KEYS.BROADCAST) {args ->
+//        viewModel.newText.observe(this) { newText ->
+//            val chat  = Chat(newText.toString())
+//            val jsonChat = Gson().toJson(chat, Chat::class.java)
+//            socket?.emit(CHAT_KEYS.NEW_MESSAGE, jsonChat)
+//        }
+//        binding.btnSend.setOnClickListener {
+//            val message = binding.etText.text.toString()
+//            if (message.isEmpty()) return@setOnClickListener
+//            viewModel.setNewText(message)
+//            binding.etText.setText("")
+//        }
+        socket?.on(CHAT_KEYS.GET_ROOM) {args ->
             val data = args[0]
-            val chat = Gson().fromJson(data.toString(), Chat::class.java) as Chat
-            runOnUiThread {
-                chatList.add(chat)
-                adapter.notifyItemInserted(chatList.size - 1)
-                binding.recyclerView.scrollToPosition(chatList.size - 1)
-                Log.d("DATADEBUG", "$chatList")
-            }
+            val room = Gson().fromJson(data.toString(), Room::class.java) as Room
+            Log.d("test", room.toString())
         }
+//        socket?.on(CHAT_KEYS.BROADCAST) {args ->
+//            val data = args[0]
+//            val chat = Gson().fromJson(data.toString(), Chat::class.java) as Chat
+//            runOnUiThread {
+//                chatList.add(chat)
+//                adapter.notifyItemInserted(chatList.size - 1)
+//                binding.recyclerView.scrollToPosition(chatList.size - 1)
+//                Log.d("DATADEBUG", "$chatList")
+//            }
+//        }
 
     }
 
     private object CHAT_KEYS {
         const val NEW_MESSAGE = "new_message"
         const val BROADCAST = "broadcast"
+        const val GET_ROOM = "get_room"
     }
 
     private fun setupRecyclerView() {
