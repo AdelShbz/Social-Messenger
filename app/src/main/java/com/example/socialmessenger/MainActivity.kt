@@ -1,8 +1,6 @@
 package com.example.socialmessenger
 
 import android.os.Bundle
-import android.util.Log
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -42,25 +40,34 @@ class MainActivity : AppCompatActivity() {
         viewModel = ViewModelProvider(this).get(MyViewModel::class.java)
         members.add(self_username)
         members.add(other_username)
+        chats.add(Chat("hello everyone", "adel"))
+        chats.add(Chat("hello too", "ali"))
         val room = Room("private", members, chats)
         val jsonRoom = Gson().toJson(room, Room::class.java)
         socket?.emit(CHAT_KEYS.GET_ROOM, jsonRoom)
 
-//        viewModel.newText.observe(this) { newText ->
-//            val chat  = Chat(newText.toString())
-//            val jsonChat = Gson().toJson(chat, Chat::class.java)
-//            socket?.emit(CHAT_KEYS.NEW_MESSAGE, jsonChat)
-//        }
-//        binding.btnSend.setOnClickListener {
-//            val message = binding.etText.text.toString()
-//            if (message.isEmpty()) return@setOnClickListener
-//            viewModel.setNewText(message)
-//            binding.etText.setText("")
-//        }
+        viewModel.newText.observe(this) { newText ->
+            val chat  = Chat(newText.toString(),self_username)
+            val jsonChat = Gson().toJson(chat, Chat::class.java)
+            val toUsername = other_username
+            if(room.type == "private"){
+                socket?.emit(CHAT_KEYS.PRIVATE_MESSAGE, jsonChat, toUsername)
+            }
+        }
+        binding.btnSend.setOnClickListener {
+            val message = binding.etText.text.toString()
+            if (message.isEmpty()) return@setOnClickListener
+            viewModel.setNewText(message)
+            binding.etText.setText("")
+        }
         socket?.on(CHAT_KEYS.GET_ROOM) {args ->
             val data = args[0]
             val room = Gson().fromJson(data.toString(), Room::class.java) as Room
-            Log.d("test", room.toString())
+//            Log.d("test", room.toString())
+            runOnUiThread {
+                chatList.addAll(room.chats)
+                adapter.notifyDataSetChanged()
+            }
         }
 //        socket?.on(CHAT_KEYS.BROADCAST) {args ->
 //            val data = args[0]
@@ -76,8 +83,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private object CHAT_KEYS {
-        const val NEW_MESSAGE = "new_message"
-        const val BROADCAST = "broadcast"
+//        const val NEW_MESSAGE = "new_message"
+        const val GROUP_MESSAGE = "group_message"
+        const val PRIVATE_MESSAGE = "private_message"
+//        const val BROADCAST = "broadcast"
         const val GET_ROOM = "get_room"
     }
 

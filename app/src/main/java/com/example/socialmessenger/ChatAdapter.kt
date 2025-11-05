@@ -23,7 +23,7 @@ class ChatAdapter(
 
     override fun onBindViewHolder(holder: ChatViewHolder,position: Int) {
         val text = items[position].text
-        val username = "username"
+        val username = items[position].username
         holder.bind(username, text)
     }
 
