@@ -37,8 +37,7 @@ class ContactListActivity : AppCompatActivity() {
 
         token = intent.getStringExtra("TOKEN").toString()
         self_username = intent.getStringExtra("USERNAME").toString()
-        Toast.makeText(this, token, Toast.LENGTH_LONG).show()
-        apiService.getContactList().enqueue(object : Callback<ResponseBody>{
+        apiService.getContactList("Bearer $token").enqueue(object : Callback<ResponseBody>{
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                 if (response.isSuccessful){
                     val jsonString = response.body()?.string()

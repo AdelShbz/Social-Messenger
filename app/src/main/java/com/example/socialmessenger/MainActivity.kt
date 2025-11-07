@@ -1,6 +1,7 @@
 package com.example.socialmessenger
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -40,8 +41,6 @@ class MainActivity : AppCompatActivity() {
         viewModel = ViewModelProvider(this).get(MyViewModel::class.java)
         members.add(self_username)
         members.add(other_username)
-        chats.add(Chat("hello everyone", "adel"))
-        chats.add(Chat("hello too", "ali"))
         val room = Room("private", members, chats)
         val jsonRoom = Gson().toJson(room, Room::class.java)
         socket?.emit(CHAT_KEYS.GET_ROOM, jsonRoom)
@@ -67,7 +66,29 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread {
                 chatList.addAll(room.chats)
                 adapter.notifyDataSetChanged()
+                binding.recyclerView.scrollToPosition(chatList.size - 1)
             }
+        }
+
+        // you have to check that is worked?
+
+        socket?.on(CHAT_KEYS.PRIVATE_MESSAGE) {args ->
+            val message = args[0]
+            val toUsername = args[1]// convert message variable to chat data class.
+            val chatMessage = Gson().fromJson(message.toString(), Chat::class.java) as Chat
+            if(
+                (chatMessage.username == self_username && toUsername == other_username) ||
+                (chatMessage.username == other_username && toUsername == self_username)
+            ) {
+                // text have to put on the recycler view.
+                runOnUiThread {
+                    chatList.add(chatMessage)
+                    adapter.notifyItemInserted(chatList.size - 1)
+                    binding.recyclerView.scrollToPosition(chatList.size - 1)
+                }
+            }
+
+            Log.d("test", "${args[0]}\n${args[1]}")
         }
 //        socket?.on(CHAT_KEYS.BROADCAST) {args ->
 //            val data = args[0]
