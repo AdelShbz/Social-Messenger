@@ -92,7 +92,31 @@ class ChatListActivity : AppCompatActivity() {
             }
         }
 
-
+        socket?.on(CHAT_KEYS.PRIVATE_MESSAGE) {args ->
+            val message = args[0]
+            val toUsername = args[1] // convert message variable to chat data class.
+            val chatMessage = Gson().fromJson(message.toString(), Chat::class.java) as Chat
+            if(chatMessage.username == username){
+                chatList.forEach { oneChatList ->
+                    if(oneChatList.chatName == toUsername){
+                        oneChatList.lastMessage = chatMessage.text
+                        runOnUiThread {
+                            adapter.notifyDataSetChanged()
+                        }
+                    }
+                }
+            }
+            if(toUsername == username) {
+                chatList.forEach { oneChatList ->
+                    if(oneChatList.chatName == chatMessage.username){
+                        oneChatList.lastMessage = chatMessage.text
+                        runOnUiThread {
+                            adapter.notifyDataSetChanged()
+                        }
+                    }
+                }
+            }
+        }
 
         binding.buttonAdd.setOnClickListener {
             val intentToContactlist = Intent(this@ChatListActivity, ContactListActivity::class.java)
