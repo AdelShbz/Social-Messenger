@@ -56,8 +56,13 @@ class ContactListActivity : AppCompatActivity() {
             }
         })
 
+        binding.tvNewGroup.setOnClickListener {
+            Toast.makeText(this, "new group", Toast.LENGTH_SHORT).show()
+        }
 
-
+        binding.tvNewChannel.setOnClickListener {
+            Toast.makeText(this, "new channel", Toast.LENGTH_SHORT).show()
+        }
 
     }
 
