@@ -62,7 +62,6 @@ class MainActivity : AppCompatActivity() {
         socket?.on(CHAT_KEYS.GET_ROOM) {args ->
             val data = args[0]
             val room = Gson().fromJson(data.toString(), Room::class.java) as Room
-//            Log.d("test", room.toString())
             runOnUiThread {
                 chatList.addAll(room.chats)
                 adapter.notifyDataSetChanged()
@@ -70,7 +69,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // you have to check that is worked?
 
         socket?.on(CHAT_KEYS.PRIVATE_MESSAGE) {args ->
             val message = args[0]
@@ -80,7 +78,6 @@ class MainActivity : AppCompatActivity() {
                 (chatMessage.username == self_username && toUsername == other_username) ||
                 (chatMessage.username == other_username && toUsername == self_username)
             ) {
-                // text have to put on the recycler view.
                 runOnUiThread {
                     chatList.add(chatMessage)
                     adapter.notifyItemInserted(chatList.size - 1)
@@ -88,26 +85,12 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            Log.d("test", "${args[0]}\n${args[1]}")
         }
-//        socket?.on(CHAT_KEYS.BROADCAST) {args ->
-//            val data = args[0]
-//            val chat = Gson().fromJson(data.toString(), Chat::class.java) as Chat
-//            runOnUiThread {
-//                chatList.add(chat)
-//                adapter.notifyItemInserted(chatList.size - 1)
-//                binding.recyclerView.scrollToPosition(chatList.size - 1)
-//                Log.d("DATADEBUG", "$chatList")
-//            }
-//        }
 
     }
 
     private object CHAT_KEYS {
-//        const val NEW_MESSAGE = "new_message"
-        const val GROUP_MESSAGE = "group_message"
         const val PRIVATE_MESSAGE = "private_message"
-//        const val BROADCAST = "broadcast"
         const val GET_ROOM = "get_room"
     }
 

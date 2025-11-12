@@ -11,6 +11,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.socialmessenger.databinding.ActivityChatListBinding
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import io.socket.client.IO
+import io.socket.client.Socket
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Response
@@ -22,6 +24,7 @@ class ChatListActivity : AppCompatActivity() {
     private var roomList = mutableListOf<Room>()
     private lateinit var adapter: ChatListAdapter
     private val apiService = RetrofitClient.instance
+    private var socket: Socket? = null
 
     lateinit var token:String
     lateinit var username: String
@@ -51,11 +54,9 @@ class ChatListActivity : AppCompatActivity() {
                     roomList.forEach { room ->
                         if (room.members[0] == username) chatName = room.members[1]
                         else chatName = room.members[0]
-                        if (room.chats.size == 0){
-                            lastMessage = "There is no Message"
-                        } else {
-                            lastMessage = room.chats[room.chats.size - 1].text
-                        }
+                        if (room.chats.size == 0) lastMessage = "There is no Message"
+                        else lastMessage = room.chats[room.chats.size - 1].text
+
                         val onechatlist = ChatList(chatName, lastMessage)
                         chatList.add(onechatlist)
                     }
@@ -66,11 +67,32 @@ class ChatListActivity : AppCompatActivity() {
 
             }
         })
-//        val chatlist1 = ChatList("ali", "hello, how are you?")
-//        roomList.add(chatlist1)
-//        roomList.add(chatlist1)
-//        roomList.add(chatlist1)
-//        adapter.notifyDataSetChanged()
+
+        socket = IO.socket(Our_Url().our_url)
+        socket?.connect()
+        socket?.on(CHAT_KEYS.NEW_CHAT) {args ->
+            val room = Gson().fromJson(args[0].toString(), Room::class.java) as Room
+            var lastMessage: String
+            if (room.members[0] == username) {
+                if(room.chats.size == 0) lastMessage = "There is no Message"
+                else lastMessage = room.chats[room.chats.size - 1].text
+                val chatlist = ChatList(room.members[1],lastMessage)
+                runOnUiThread {
+                    chatList.add(chatlist)
+                    adapter.notifyDataSetChanged()
+                }
+            } else if (room.members[1] == username) {
+                if(room.chats.size == 0) lastMessage = "There is no Message"
+                else lastMessage = room.chats[room.chats.size - 1].text
+                val chatlist = ChatList(room.members[0],lastMessage)
+                runOnUiThread {
+                    chatList.add(chatlist)
+                    adapter.notifyDataSetChanged()
+                }
+            }
+        }
+
+
 
         binding.buttonAdd.setOnClickListener {
             val intentToContactlist = Intent(this@ChatListActivity, ContactListActivity::class.java)
@@ -85,5 +107,10 @@ class ChatListActivity : AppCompatActivity() {
         adapter = ChatListAdapter(chatList, this@ChatListActivity, username)
         binding.rvChatList.layoutManager = LinearLayoutManager(this)
         binding.rvChatList.adapter = adapter
+    }
+
+    private object CHAT_KEYS {
+        const val NEW_CHAT = "new_chat"
+        const val PRIVATE_MESSAGE = "private_message"
     }
 }
