@@ -35,6 +35,7 @@ class ChatListAdapter(
             val intent = Intent(activity, MainActivity::class.java)
             intent.putExtra("SELF_USERNAME", self_username)
             intent.putExtra("OTHER_USERNAME", chatName)
+            intent.putExtra("TYPE", "private")
             activity.startActivity(intent)
         })
     }

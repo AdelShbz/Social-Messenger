@@ -2,6 +2,7 @@ package com.example.socialmessenger
 
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -33,43 +34,45 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-        self_username = intent.getStringExtra("SELF_USERNAME").toString()
-        other_username = intent.getStringExtra("OTHER_USERNAME").toString()
         socket = IO.socket(SOCKET_URL)
         socket?.connect()
         setupRecyclerView()
-        viewModel = ViewModelProvider(this).get(MyViewModel::class.java)
-        members.add(self_username)
-        members.add(other_username)
-        val room = Room("private", members, chats)
-        val jsonRoom = Gson().toJson(room, Room::class.java)
-        socket?.emit(CHAT_KEYS.GET_ROOM, jsonRoom)
+        val type = intent.getStringExtra("TYPE")
+        if (type == "group"){
 
-        viewModel.newText.observe(this) { newText ->
-            val chat  = Chat(newText.toString(),self_username)
-            val jsonChat = Gson().toJson(chat, Chat::class.java)
-            val toUsername = other_username
-            if(room.type == "private"){
-                socket?.emit(CHAT_KEYS.PRIVATE_MESSAGE, jsonChat, toUsername)
+        } else if (type == "private"){
+            self_username = intent.getStringExtra("SELF_USERNAME").toString()
+            other_username = intent.getStringExtra("OTHER_USERNAME").toString()
+            viewModel = ViewModelProvider(this).get(MyViewModel::class.java)
+            members.add(self_username)
+            members.add(other_username)
+            val room = Room("private", members, chats)
+            val jsonRoom = Gson().toJson(room, Room::class.java)
+            socket?.emit(CHAT_KEYS.GET_ROOM, jsonRoom)
+            viewModel.newText.observe(this) { newText ->
+                val chat  = Chat(newText.toString(),self_username)
+                val jsonChat = Gson().toJson(chat, Chat::class.java)
+                val toUsername = other_username
+                if(room.type == "private"){
+                    socket?.emit(CHAT_KEYS.PRIVATE_MESSAGE, jsonChat, toUsername)
+                }
+            }
+            binding.btnSend.setOnClickListener {
+                val message = binding.etText.text.toString()
+                if (message.isEmpty()) return@setOnClickListener
+                viewModel.setNewText(message)
+                binding.etText.setText("")
+            }
+            socket?.on(CHAT_KEYS.GET_ROOM) {args ->
+                val data = args[0]
+                val room = Gson().fromJson(data.toString(), Room::class.java) as Room
+                runOnUiThread {
+                    chatList.addAll(room.chats)
+                    adapter.notifyDataSetChanged()
+                    binding.recyclerView.scrollToPosition(chatList.size - 1)
+                }
             }
         }
-        binding.btnSend.setOnClickListener {
-            val message = binding.etText.text.toString()
-            if (message.isEmpty()) return@setOnClickListener
-            viewModel.setNewText(message)
-            binding.etText.setText("")
-        }
-        socket?.on(CHAT_KEYS.GET_ROOM) {args ->
-            val data = args[0]
-            val room = Gson().fromJson(data.toString(), Room::class.java) as Room
-            runOnUiThread {
-                chatList.addAll(room.chats)
-                adapter.notifyDataSetChanged()
-                binding.recyclerView.scrollToPosition(chatList.size - 1)
-            }
-        }
-
-
         socket?.on(CHAT_KEYS.PRIVATE_MESSAGE) {args ->
             val message = args[0]
             val toUsername = args[1]// convert message variable to chat data class.

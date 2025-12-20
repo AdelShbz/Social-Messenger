@@ -33,6 +33,7 @@ class ContactAdapter(
             intentToMainActivity.putExtra("TOKEN",token)
             intentToMainActivity.putExtra("SELF_USERNAME",self_username)
             intentToMainActivity.putExtra("OTHER_USERNAME", conName)
+            intentToMainActivity.putExtra("TYPE", "private")
             activity.startActivity(intentToMainActivity)
         })
     }
