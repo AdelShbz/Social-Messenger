@@ -44,12 +44,13 @@ class GroupNamingActivity : AppCompatActivity() {
             }
             val intent = Intent(this@GroupNamingActivity, MainActivity::class.java)
             intent.putExtra("TOKEN", token)
-            intent.putExtra("USERNAME", self_username)
+            intent.putExtra("SELF_USERNAME", self_username) // done
             val membersJson = gson.toJson(selectedItems)
-            intent.putExtra("MEMBERS", membersJson)
-            intent.putExtra("TYPE", "group")
+            intent.putExtra("MEMBERS", membersJson) // done
+            intent.putExtra("TYPE", "group") // done
             val groupName = binding.editTextGroupNaming.text.toString()
-            intent.putExtra("ROOM_NAME",groupName)
+            intent.putExtra("ROOM_NAME",groupName) // done
+            intent.putExtra("ID", "")
             startActivity(intent)
         }
     }

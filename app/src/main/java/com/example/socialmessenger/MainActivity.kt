@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.socialmessenger.databinding.ActivityMainBinding
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import io.socket.client.IO
 import io.socket.client.Socket
 
@@ -18,12 +19,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private var socket: Socket? = null
     lateinit var viewModel: MyViewModel
+    private var gson: Gson = Gson()
     private val chatList = mutableListOf<Chat>()
     private lateinit var adapter: ChatAdapter
     private val members = mutableListOf<String>()
     private val chats = mutableListOf<Chat>()
     lateinit var self_username: String
     lateinit var other_username: String
+    var membersInCL = mutableListOf<ContactList>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -37,17 +40,37 @@ class MainActivity : AppCompatActivity() {
         socket = IO.socket(SOCKET_URL)
         socket?.connect()
         setupRecyclerView()
-        val type = intent.getStringExtra("TYPE")
+        val type = intent.getStringExtra("TYPE").toString()
+        self_username = intent.getStringExtra("SELF_USERNAME").toString()
         if (type == "group"){
-
+            val id = intent.getStringExtra("ID").toString()
+            val roomName = intent.getStringExtra("ROOM_NAME").toString()
+            val membersInString = intent.getStringExtra("MEMBERS")
+            val typeForConvert = object : TypeToken<MutableList<ContactList>>() {}.type
+            membersInCL = gson.fromJson(membersInString, typeForConvert)
+            membersInCL.forEach { memberCL -> members.add(memberCL.username) }
+            members.add(self_username)
+            val groupRoles = GroupRoles(self_username)
+            val roomGroup = RoomGroup(id, type, members, chats, roomName, groupRoles)
+            // we have to send roomGroup variable to server.
+            val jsonRoomGroup = gson.toJson(roomGroup, RoomGroup::class.java)
+            socket?.emit(CHAT_KEYS.GET_ROOM, jsonRoomGroup)
+            socket?.on(CHAT_KEYS.GET_ROOM) {args ->
+                val data = args[0]
+                val room = Gson().fromJson(data.toString(), RoomGroup::class.java) as RoomGroup
+                runOnUiThread {
+                    chatList.addAll(room.chats)
+                    adapter.notifyDataSetChanged()
+                    binding.recyclerView.scrollToPosition(chatList.size - 1)
+                }
+            }
         } else if (type == "private"){
-            self_username = intent.getStringExtra("SELF_USERNAME").toString()
             other_username = intent.getStringExtra("OTHER_USERNAME").toString()
             viewModel = ViewModelProvider(this).get(MyViewModel::class.java)
             members.add(self_username)
             members.add(other_username)
-            val room = Room("private", members, chats)
-            val jsonRoom = Gson().toJson(room, Room::class.java)
+            val room = Room(type, members, chats)
+            val jsonRoom = gson.toJson(room, Room::class.java)
             socket?.emit(CHAT_KEYS.GET_ROOM, jsonRoom)
             viewModel.newText.observe(this) { newText ->
                 val chat  = Chat(newText.toString(),self_username)

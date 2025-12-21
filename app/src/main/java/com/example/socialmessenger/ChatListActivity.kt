@@ -54,7 +54,7 @@ class ChatListActivity : AppCompatActivity() {
                     roomList.forEach { room ->
                         if (room.members[0] == username) chatName = room.members[1]
                         else chatName = room.members[0]
-                        if (room.chats.size == 0) lastMessage = "There is no Message"
+                        if (room.chats.size == 0) lastMessage = "پیامی وجود ندارد"
                         else lastMessage = room.chats[room.chats.size - 1].text
 
                         val onechatlist = ChatList(chatName, lastMessage)
@@ -70,11 +70,11 @@ class ChatListActivity : AppCompatActivity() {
 
         socket = IO.socket(Our_Url().our_url)
         socket?.connect()
-        socket?.on(CHAT_KEYS.NEW_CHAT) {args ->
+        socket?.on(CHAT_KEYS.NEW_CHAT_PRIVATE) {args ->
             val room = Gson().fromJson(args[0].toString(), Room::class.java) as Room
             var lastMessage: String
             if (room.members[0] == username) {
-                if(room.chats.size == 0) lastMessage = "There is no Message"
+                if(room.chats.size == 0) lastMessage = "پیامی وجود ندارد"
                 else lastMessage = room.chats[room.chats.size - 1].text
                 val chatlist = ChatList(room.members[1],lastMessage)
                 runOnUiThread {
@@ -82,12 +82,28 @@ class ChatListActivity : AppCompatActivity() {
                     adapter.notifyDataSetChanged()
                 }
             } else if (room.members[1] == username) {
-                if(room.chats.size == 0) lastMessage = "There is no Message"
+                if(room.chats.size == 0) lastMessage = "پیامی وجود ندارد"
                 else lastMessage = room.chats[room.chats.size - 1].text
                 val chatlist = ChatList(room.members[0],lastMessage)
                 runOnUiThread {
                     chatList.add(chatlist)
                     adapter.notifyDataSetChanged()
+                }
+            }
+        }
+        socket?.on(CHAT_KEYS.NEW_CHAT_GROUP) {args ->
+            val room = Gson().fromJson(args[0].toString(), RoomGroup::class.java) as RoomGroup
+            room.members.forEach { member ->
+                if(member == username){
+                    var lastMessage: String
+                    if(room.chats.size == 0) lastMessage = "پیامی وجود ندارد"
+                    else lastMessage = room.chats[room.chats.size - 1].text
+                    val chatlist = ChatList(room.roomName,lastMessage)
+                    runOnUiThread {
+                        chatList.add(chatlist)
+                        adapter.notifyDataSetChanged()
+                    }
+                    return@forEach
                 }
             }
         }
@@ -134,7 +150,8 @@ class ChatListActivity : AppCompatActivity() {
     }
 
     private object CHAT_KEYS {
-        const val NEW_CHAT = "new_chat"
+        const val NEW_CHAT_PRIVATE = "new_chat_private"
+        const val NEW_CHAT_GROUP = "new_chat_group"
         const val PRIVATE_MESSAGE = "private_message"
     }
 }
