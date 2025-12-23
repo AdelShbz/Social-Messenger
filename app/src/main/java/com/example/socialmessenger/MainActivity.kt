@@ -26,6 +26,7 @@ class MainActivity : AppCompatActivity() {
     private val chats = mutableListOf<Chat>()
     lateinit var self_username: String
     lateinit var other_username: String
+    lateinit var roomId: String
     var membersInCL = mutableListOf<ContactList>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,12 +53,12 @@ class MainActivity : AppCompatActivity() {
             members.add(self_username)
             val groupRoles = GroupRoles(self_username)
             val roomGroup = RoomGroup(id, type, members, chats, roomName, groupRoles)
-            // we have to send roomGroup variable to server.
             val jsonRoomGroup = gson.toJson(roomGroup, RoomGroup::class.java)
             socket?.emit(CHAT_KEYS.GET_ROOM, jsonRoomGroup)
             socket?.on(CHAT_KEYS.GET_ROOM) {args ->
                 val data = args[0]
                 val room = Gson().fromJson(data.toString(), RoomGroup::class.java) as RoomGroup
+                roomId = room._id
                 runOnUiThread {
                     chatList.addAll(room.chats)
                     adapter.notifyDataSetChanged()
@@ -66,26 +67,11 @@ class MainActivity : AppCompatActivity() {
             }
         } else if (type == "private"){
             other_username = intent.getStringExtra("OTHER_USERNAME").toString()
-            viewModel = ViewModelProvider(this).get(MyViewModel::class.java)
             members.add(self_username)
             members.add(other_username)
             val room = Room(type, members, chats)
             val jsonRoom = gson.toJson(room, Room::class.java)
             socket?.emit(CHAT_KEYS.GET_ROOM, jsonRoom)
-            viewModel.newText.observe(this) { newText ->
-                val chat  = Chat(newText.toString(),self_username)
-                val jsonChat = Gson().toJson(chat, Chat::class.java)
-                val toUsername = other_username
-                if(room.type == "private"){
-                    socket?.emit(CHAT_KEYS.PRIVATE_MESSAGE, jsonChat, toUsername)
-                }
-            }
-            binding.btnSend.setOnClickListener {
-                val message = binding.etText.text.toString()
-                if (message.isEmpty()) return@setOnClickListener
-                viewModel.setNewText(message)
-                binding.etText.setText("")
-            }
             socket?.on(CHAT_KEYS.GET_ROOM) {args ->
                 val data = args[0]
                 val room = Gson().fromJson(data.toString(), Room::class.java) as Room
@@ -96,10 +82,28 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+        viewModel = ViewModelProvider(this).get(MyViewModel::class.java)
+        viewModel.newText.observe(this) { newText ->
+            val chat  = Chat(newText.toString(),self_username)
+            val jsonChat = Gson().toJson(chat, Chat::class.java)
+            if(type == "private"){
+                val toUsername = other_username
+                socket?.emit(CHAT_KEYS.PRIVATE_MESSAGE, jsonChat, toUsername)
+            }else if (type == "group") {
+                val groupId = roomId
+                socket?.emit(CHAT_KEYS.GROUP_MESSAGE, jsonChat,groupId)
+            }
+        }
+        binding.btnSend.setOnClickListener {
+            val message = binding.etText.text.toString()
+            if (message.isEmpty()) return@setOnClickListener
+            viewModel.setNewText(message)
+            binding.etText.setText("")
+        }
         socket?.on(CHAT_KEYS.PRIVATE_MESSAGE) {args ->
             val message = args[0]
             val toUsername = args[1]// convert message variable to chat data class.
-            val chatMessage = Gson().fromJson(message.toString(), Chat::class.java) as Chat
+            val chatMessage = gson.fromJson(message.toString(), Chat::class.java) as Chat
             if(
                 (chatMessage.username == self_username && toUsername == other_username) ||
                 (chatMessage.username == other_username && toUsername == self_username)
@@ -110,13 +114,25 @@ class MainActivity : AppCompatActivity() {
                     binding.recyclerView.scrollToPosition(chatList.size - 1)
                 }
             }
-
+        }
+        socket?.on(CHAT_KEYS.GROUP_MESSAGE) {args ->
+            val message = args[0]
+            val groupId = args[1].toString()
+            val chatMessage = gson.fromJson(message.toString(), Chat::class.java) as Chat
+            if (groupId == roomId) {
+                runOnUiThread {
+                    chatList.add(chatMessage)
+                    adapter.notifyItemInserted(chatList.size - 1)
+                    binding.recyclerView.scrollToPosition(chatList.size - 1)
+                }
+            }
         }
 
     }
 
     private object CHAT_KEYS {
         const val PRIVATE_MESSAGE = "private_message"
+        const val GROUP_MESSAGE = "group_message"
         const val GET_ROOM = "get_room"
     }
 

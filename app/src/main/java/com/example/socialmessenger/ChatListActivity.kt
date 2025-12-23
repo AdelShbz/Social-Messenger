@@ -2,7 +2,6 @@ package com.example.socialmessenger
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -22,6 +21,7 @@ class ChatListActivity : AppCompatActivity() {
     private var gson: Gson = Gson()
     private var chatList = mutableListOf<ChatList>()
     private var roomList = mutableListOf<Room>()
+    private var groupList = mutableListOf<RoomGroup>()
     private lateinit var adapter: ChatListAdapter
     private val apiService = RetrofitClient.instance
     private var socket: Socket? = null
@@ -41,22 +41,28 @@ class ChatListActivity : AppCompatActivity() {
         token = intent.getStringExtra("TOKEN").toString()
         username = intent.getStringExtra("USERNAME").toString()
         setupRecyclerView()
-
         apiService.getChatList("Bearer $token").enqueue(object : retrofit2.Callback<ResponseBody> {
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                 if (response.isSuccessful) {
                     val jsonString = response.body()?.string()
-                    val type = object : TypeToken<MutableList<Room>>() {}.type
-                    roomList = gson.fromJson(jsonString, type)
-
+                    val roomType = object : TypeToken<MutableList<Room>>() {}.type
+                    roomList = gson.fromJson(jsonString, roomType)
+                    val groupType = object : TypeToken<MutableList<RoomGroup>>() {}.type
+                    groupList = gson.fromJson(jsonString, groupType)
                     var chatName: String
                     var lastMessage: String
-                    roomList.forEach { room ->
-                        if (room.members[0] == username) chatName = room.members[1]
-                        else chatName = room.members[0]
-                        if (room.chats.size == 0) lastMessage = "پیامی وجود ندارد"
-                        else lastMessage = room.chats[room.chats.size - 1].text
-
+                    roomList.forEachIndexed { index, room ->
+                        if (room.type == "private"){
+                            if (room.members[0] == username) chatName = room.members[1]
+                            else chatName = room.members[0]
+                            if (room.chats.size == 0) lastMessage = "پیامی وجود ندارد"
+                            else lastMessage = room.chats[room.chats.size - 1].text
+                        } else {
+                            val roomGroup = groupList[index]
+                            chatName = roomGroup.roomName
+                            if (room.chats.size == 0) lastMessage = "پیامی وجود ندارد"
+                            else lastMessage = roomGroup.chats[room.chats.size - 1].text
+                        }
                         val onechatlist = ChatList(chatName, lastMessage)
                         chatList.add(onechatlist)
                     }
