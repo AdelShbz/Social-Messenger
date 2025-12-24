@@ -40,7 +40,7 @@ class ChatListActivity : AppCompatActivity() {
         }
         token = intent.getStringExtra("TOKEN").toString()
         username = intent.getStringExtra("USERNAME").toString()
-        setupRecyclerView()
+//        setupRecyclerView()
         apiService.getChatList("Bearer $token").enqueue(object : retrofit2.Callback<ResponseBody> {
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                 if (response.isSuccessful) {
@@ -66,6 +66,7 @@ class ChatListActivity : AppCompatActivity() {
                         val onechatlist = ChatList(chatName, lastMessage)
                         chatList.add(onechatlist)
                     }
+                    setupRecyclerView() // here
                     adapter.notifyDataSetChanged()
                 }
             }
@@ -150,7 +151,12 @@ class ChatListActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        adapter = ChatListAdapter(chatList, this@ChatListActivity, username)
+        adapter = ChatListAdapter(
+            chatList,
+            this@ChatListActivity,
+            username,
+            groupList
+        )
         binding.rvChatList.layoutManager = LinearLayoutManager(this)
         binding.rvChatList.adapter = adapter
     }
