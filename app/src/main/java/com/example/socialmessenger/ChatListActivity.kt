@@ -40,7 +40,6 @@ class ChatListActivity : AppCompatActivity() {
         }
         token = intent.getStringExtra("TOKEN").toString()
         username = intent.getStringExtra("USERNAME").toString()
-//        setupRecyclerView()
         apiService.getChatList("Bearer $token").enqueue(object : retrofit2.Callback<ResponseBody> {
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                 if (response.isSuccessful) {
@@ -117,15 +116,13 @@ class ChatListActivity : AppCompatActivity() {
 
         socket?.on(CHAT_KEYS.PRIVATE_MESSAGE) {args ->
             val message = args[0]
-            val toUsername = args[1] // convert message variable to chat data class.
+            val toUsername = args[1]
             val chatMessage = Gson().fromJson(message.toString(), Chat::class.java) as Chat
             if(chatMessage.username == username){
                 chatList.forEach { oneChatList ->
                     if(oneChatList.chatName == toUsername){
                         oneChatList.lastMessage = chatMessage.text
-                        runOnUiThread {
-                            adapter.notifyDataSetChanged()
-                        }
+                        runOnUiThread { adapter.notifyDataSetChanged() }
                     }
                 }
             }
@@ -133,10 +130,20 @@ class ChatListActivity : AppCompatActivity() {
                 chatList.forEach { oneChatList ->
                     if(oneChatList.chatName == chatMessage.username){
                         oneChatList.lastMessage = chatMessage.text
-                        runOnUiThread {
-                            adapter.notifyDataSetChanged()
-                        }
+                        runOnUiThread { adapter.notifyDataSetChanged() }
                     }
+                }
+            }
+        }
+
+        socket?.on(CHAT_KEYS.GROUP_MESSAGE) {args ->
+            val message = args[0]
+            val groupId = args[1]
+            val chatMessage = Gson().fromJson(message.toString(), Chat::class.java) as Chat
+            groupList.forEachIndexed { index, group ->
+                if (group._id == groupId){
+                    chatList[index].lastMessage = chatMessage.text
+                    runOnUiThread { adapter.notifyDataSetChanged() }
                 }
             }
         }
@@ -165,5 +172,6 @@ class ChatListActivity : AppCompatActivity() {
         const val NEW_CHAT_PRIVATE = "new_chat_private"
         const val NEW_CHAT_GROUP = "new_chat_group"
         const val PRIVATE_MESSAGE = "private_message"
+        const val GROUP_MESSAGE = "group_message"
     }
 }
