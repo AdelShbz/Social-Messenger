@@ -46,8 +46,8 @@ class ChatListActivity : AppCompatActivity() {
                     val jsonString = response.body()?.string()
                     val roomType = object : TypeToken<MutableList<Room>>() {}.type
                     roomList = gson.fromJson(jsonString, roomType)
-                    val groupType = object : TypeToken<MutableList<RoomGroup>>() {}.type
-                    groupList = gson.fromJson(jsonString, groupType)
+//                    val groupType = object : TypeToken<MutableList<RoomGroup>>() {}.type
+//                    groupList = gson.fromJson(jsonString, groupType)
                     var chatName: String
                     var lastMessage: String
                     roomList.forEachIndexed { index, room ->
@@ -99,19 +99,30 @@ class ChatListActivity : AppCompatActivity() {
         }
         socket?.on(CHAT_KEYS.NEW_CHAT_GROUP) {args ->
             val room = Gson().fromJson(args[0].toString(), RoomGroup::class.java) as RoomGroup
-            room.members.forEach { member ->
-                if(member == username){
-                    var lastMessage: String
-                    if(room.chats.size == 0) lastMessage = "پیامی وجود ندارد"
-                    else lastMessage = room.chats[room.chats.size - 1].text
-                    val chatlist = ChatList(room.roomName,lastMessage)
-                    runOnUiThread {
-                        chatList.add(chatlist)
-                        adapter.notifyDataSetChanged()
-                    }
-                    return@forEach
-                }
-            }
+//            room.members.forEach { member ->
+//                if(member == username){
+//                    var lastMessage: String
+//                    if(room.chats.size == 0) lastMessage = "پیامی وجود ندارد"
+//                    else lastMessage = room.chats[room.chats.size - 1].text
+//                    val chatlist = ChatList(room.roomName,lastMessage)
+//                    runOnUiThread {
+//                        chatList.add(chatlist)
+//                        adapter.notifyDataSetChanged()
+//                    }
+//                    return@forEach
+//                }
+//            }
+//            if (room.members.contains(username)) {
+//                val lastMessage =
+//                    if (room.chats.isEmpty()) "پیامی وجود ندارد"
+//                    else room.chats.last().text
+//
+//                runOnUiThread {
+//                    groupList.add(room)
+//                    chatList.add(ChatList(room.roomName, lastMessage))
+//                    adapter.notifyDataSetChanged()
+//                }
+//            }
         }
 
         socket?.on(CHAT_KEYS.PRIVATE_MESSAGE) {args ->
@@ -138,14 +149,21 @@ class ChatListActivity : AppCompatActivity() {
 
         socket?.on(CHAT_KEYS.GROUP_MESSAGE) {args ->
             val message = args[0]
-            val groupId = args[1]
+            val groupId = args[1].toString()
             val chatMessage = Gson().fromJson(message.toString(), Chat::class.java) as Chat
-            groupList.forEachIndexed { index, group ->
-                if (group._id == groupId){
-                    chatList[index].lastMessage = chatMessage.text
-                    runOnUiThread { adapter.notifyDataSetChanged() }
-                }
-            }
+//            groupList.forEachIndexed { index, group ->
+//                if (group._id == groupId){
+//                    chatList[index].lastMessage = chatMessage.text
+//                    runOnUiThread { adapter.notifyDataSetChanged() }
+//                }
+//            }
+//            runOnUiThread {
+//                val item = chatList.find { it.roomId == groupId }
+//                item?.let {
+//                    it.lastMessage = chatMessage.text
+//                    adapter.notifyDataSetChanged()
+//                }
+//            }
         }
 
         binding.buttonAdd.setOnClickListener {

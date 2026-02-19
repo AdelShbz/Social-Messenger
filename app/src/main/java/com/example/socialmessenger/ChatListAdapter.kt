@@ -32,7 +32,9 @@ class ChatListAdapter(
     override fun onBindViewHolder(holder: ChatListViewHolder,position: Int) {
         val chatName = items[position].chatName
         val text = items[position].lastMessage
-        val type = groupList[position].type
+//        val type = groupList[position].type
+        val type = "private"
+//        val type = if (position < groupList.size) groupList[position].type else "private"
         holder.bind(chatName, text, fun (){
             val intent = Intent(activity, MainActivity::class.java)
             intent.putExtra("SELF_USERNAME", self_username)
