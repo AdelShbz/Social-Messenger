@@ -47,6 +47,7 @@ class CreateGroupActivity : AppCompatActivity() {
 //            Log.d("test", adapter.selectedItems.toString())
             intent.putExtra("TOKEN", token)
             intent.putExtra("USERNAME", self_username)
+            adapter.selectedItems.add(ContactList(self_username,""))
             val selectedItemsJson = gson.toJson(adapter.selectedItems)
             intent.putExtra("SELECTED_ITEMS", selectedItemsJson)
             startActivity(intent)

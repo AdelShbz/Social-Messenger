@@ -1,8 +1,6 @@
 package com.example.socialmessenger
 
 import android.os.Bundle
-import android.util.Log
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -26,7 +24,6 @@ class MainActivity : AppCompatActivity() {
     private val chats = mutableListOf<Chat>()
     lateinit var self_username: String
     lateinit var other_username: String
-    lateinit var roomId: String
     var membersInCL = mutableListOf<ContactList>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,22 +40,22 @@ class MainActivity : AppCompatActivity() {
         setupRecyclerView()
         val type = intent.getStringExtra("TYPE").toString()
         self_username = intent.getStringExtra("SELF_USERNAME").toString()
+        var id = intent.getStringExtra("ID").toString()
         if (type == "group"){
-            val id = intent.getStringExtra("ID").toString()
             val roomName = intent.getStringExtra("ROOM_NAME").toString()
             val membersInString = intent.getStringExtra("MEMBERS")
             val typeForConvert = object : TypeToken<MutableList<ContactList>>() {}.type
             membersInCL = gson.fromJson(membersInString, typeForConvert)
             membersInCL.forEach { memberCL -> members.add(memberCL.username) }
-            members.add(self_username)
+//            members.add(self_username)
             val groupRoles = GroupRoles(self_username)
-            val roomGroup = RoomGroup(id, type, members, chats, roomName, groupRoles)
-            val jsonRoomGroup = gson.toJson(roomGroup, RoomGroup::class.java)
-            socket?.emit(CHAT_KEYS.GET_ROOM, jsonRoomGroup)
+            val room = Room(id, type, members, chats, roomName, groupRoles)
+            val jsonRoom = gson.toJson(room, Room::class.java)
+            socket?.emit(CHAT_KEYS.GET_ROOM, jsonRoom)
             socket?.on(CHAT_KEYS.GET_ROOM) {args ->
                 val data = args[0]
-                val room = Gson().fromJson(data.toString(), RoomGroup::class.java) as RoomGroup
-                roomId = room._id
+                val room = Gson().fromJson(data.toString(), Room::class.java) as Room
+                id = room._id
                 runOnUiThread {
                     chatList.addAll(room.chats)
                     adapter.notifyDataSetChanged()
@@ -69,12 +66,14 @@ class MainActivity : AppCompatActivity() {
             other_username = intent.getStringExtra("OTHER_USERNAME").toString()
             members.add(self_username)
             members.add(other_username)
-            val room = Room(type, members, chats)
+            val privateRoles = GroupRoles("")
+            val room = Room(id, type, members, chats,"", privateRoles)
             val jsonRoom = gson.toJson(room, Room::class.java)
             socket?.emit(CHAT_KEYS.GET_ROOM, jsonRoom)
             socket?.on(CHAT_KEYS.GET_ROOM) {args ->
                 val data = args[0]
                 val room = Gson().fromJson(data.toString(), Room::class.java) as Room
+                id = room._id
                 runOnUiThread {
                     chatList.addAll(room.chats)
                     adapter.notifyDataSetChanged()
@@ -90,7 +89,7 @@ class MainActivity : AppCompatActivity() {
                 val toUsername = other_username
                 socket?.emit(CHAT_KEYS.PRIVATE_MESSAGE, jsonChat, toUsername)
             }else if (type == "group") {
-                val groupId = roomId
+                val groupId = id
                 socket?.emit(CHAT_KEYS.GROUP_MESSAGE, jsonChat,groupId)
             }
         }
@@ -102,12 +101,9 @@ class MainActivity : AppCompatActivity() {
         }
         socket?.on(CHAT_KEYS.PRIVATE_MESSAGE) {args ->
             val message = args[0]
-            val toUsername = args[1]// convert message variable to chat data class.
+            val toId = args[1]
             val chatMessage = gson.fromJson(message.toString(), Chat::class.java) as Chat
-            if(
-                (chatMessage.username == self_username && toUsername == other_username) ||
-                (chatMessage.username == other_username && toUsername == self_username)
-            ) {
+            if (id == toId){
                 runOnUiThread {
                     chatList.add(chatMessage)
                     adapter.notifyItemInserted(chatList.size - 1)
@@ -119,7 +115,7 @@ class MainActivity : AppCompatActivity() {
             val message = args[0]
             val groupId = args[1].toString()
             val chatMessage = gson.fromJson(message.toString(), Chat::class.java) as Chat
-            if (groupId == roomId) {
+            if (groupId == id) {
                 runOnUiThread {
                     chatList.add(chatMessage)
                     adapter.notifyItemInserted(chatList.size - 1)

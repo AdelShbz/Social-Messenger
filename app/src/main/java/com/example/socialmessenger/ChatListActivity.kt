@@ -48,23 +48,23 @@ class ChatListActivity : AppCompatActivity() {
                     roomList = gson.fromJson(jsonString, roomType)
 //                    val groupType = object : TypeToken<MutableList<RoomGroup>>() {}.type
 //                    groupList = gson.fromJson(jsonString, groupType)
-                    var chatName: String
-                    var lastMessage: String
-                    roomList.forEachIndexed { index, room ->
-                        if (room.type == "private"){
-                            if (room.members[0] == username) chatName = room.members[1]
-                            else chatName = room.members[0]
-                            if (room.chats.size == 0) lastMessage = "پیامی وجود ندارد"
-                            else lastMessage = room.chats[room.chats.size - 1].text
-                        } else {
-                            val roomGroup = groupList[index]
-                            chatName = roomGroup.roomName
-                            if (room.chats.size == 0) lastMessage = "پیامی وجود ندارد"
-                            else lastMessage = roomGroup.chats[room.chats.size - 1].text
-                        }
-                        val onechatlist = ChatList(chatName, lastMessage)
-                        chatList.add(onechatlist)
-                    }
+//                    var chatName: String
+//                    var lastMessage: String
+//                    roomList.forEachIndexed { index, room ->
+//                        if (room.type == "private"){
+//                            if (room.members[0] == username) chatName = room.members[1]
+//                            else chatName = room.members[0]
+//                            if (room.chats.size == 0) lastMessage = "پیامی وجود ندارد"
+//                            else lastMessage = room.chats[room.chats.size - 1].text
+//                        } else {
+//                            val roomGroup = groupList[index]
+//                            chatName = roomGroup.roomName
+//                            if (room.chats.size == 0) lastMessage = "پیامی وجود ندارد"
+//                            else lastMessage = roomGroup.chats[room.chats.size - 1].text
+//                        }
+//                        val onechatlist = ChatList(chatName, lastMessage)
+//                        chatList.add(onechatlist)
+//                    }
                     setupRecyclerView() // here
                     adapter.notifyDataSetChanged()
                 }
@@ -76,72 +76,23 @@ class ChatListActivity : AppCompatActivity() {
 
         socket = IO.socket(Our_Url().our_url)
         socket?.connect()
-        socket?.on(CHAT_KEYS.NEW_CHAT_PRIVATE) {args ->
+        socket?.on(CHAT_KEYS.NEW_CHAT) {args ->
             val room = Gson().fromJson(args[0].toString(), Room::class.java) as Room
-            var lastMessage: String
-            if (room.members[0] == username) {
-                if(room.chats.size == 0) lastMessage = "پیامی وجود ندارد"
-                else lastMessage = room.chats[room.chats.size - 1].text
-                val chatlist = ChatList(room.members[1],lastMessage)
-                runOnUiThread {
-                    chatList.add(chatlist)
-                    adapter.notifyDataSetChanged()
-                }
-            } else if (room.members[1] == username) {
-                if(room.chats.size == 0) lastMessage = "پیامی وجود ندارد"
-                else lastMessage = room.chats[room.chats.size - 1].text
-                val chatlist = ChatList(room.members[0],lastMessage)
-                runOnUiThread {
-                    chatList.add(chatlist)
-                    adapter.notifyDataSetChanged()
-                }
+            roomList.add(room)
+            runOnUiThread {
+                adapter.notifyDataSetChanged()
             }
-        }
-        socket?.on(CHAT_KEYS.NEW_CHAT_GROUP) {args ->
-            val room = Gson().fromJson(args[0].toString(), RoomGroup::class.java) as RoomGroup
-//            room.members.forEach { member ->
-//                if(member == username){
-//                    var lastMessage: String
-//                    if(room.chats.size == 0) lastMessage = "پیامی وجود ندارد"
-//                    else lastMessage = room.chats[room.chats.size - 1].text
-//                    val chatlist = ChatList(room.roomName,lastMessage)
-//                    runOnUiThread {
-//                        chatList.add(chatlist)
-//                        adapter.notifyDataSetChanged()
-//                    }
-//                    return@forEach
-//                }
-//            }
-//            if (room.members.contains(username)) {
-//                val lastMessage =
-//                    if (room.chats.isEmpty()) "پیامی وجود ندارد"
-//                    else room.chats.last().text
-//
-//                runOnUiThread {
-//                    groupList.add(room)
-//                    chatList.add(ChatList(room.roomName, lastMessage))
-//                    adapter.notifyDataSetChanged()
-//                }
-//            }
         }
 
         socket?.on(CHAT_KEYS.PRIVATE_MESSAGE) {args ->
             val message = args[0]
-            val toUsername = args[1]
+            val toId = args[1].toString()
             val chatMessage = Gson().fromJson(message.toString(), Chat::class.java) as Chat
-            if(chatMessage.username == username){
-                chatList.forEach { oneChatList ->
-                    if(oneChatList.chatName == toUsername){
-                        oneChatList.lastMessage = chatMessage.text
-                        runOnUiThread { adapter.notifyDataSetChanged() }
-                    }
-                }
-            }
-            if(toUsername == username) {
-                chatList.forEach { oneChatList ->
-                    if(oneChatList.chatName == chatMessage.username){
-                        oneChatList.lastMessage = chatMessage.text
-                        runOnUiThread { adapter.notifyDataSetChanged() }
+            roomList.forEachIndexed { index , room ->
+                if (room._id == toId){
+                    roomList[index].chats.add(chatMessage)
+                    runOnUiThread {
+                        adapter.notifyDataSetChanged()
                     }
                 }
             }
@@ -149,21 +100,16 @@ class ChatListActivity : AppCompatActivity() {
 
         socket?.on(CHAT_KEYS.GROUP_MESSAGE) {args ->
             val message = args[0]
-            val groupId = args[1].toString()
+            val toId = args[1].toString()
             val chatMessage = Gson().fromJson(message.toString(), Chat::class.java) as Chat
-//            groupList.forEachIndexed { index, group ->
-//                if (group._id == groupId){
-//                    chatList[index].lastMessage = chatMessage.text
-//                    runOnUiThread { adapter.notifyDataSetChanged() }
-//                }
-//            }
-//            runOnUiThread {
-//                val item = chatList.find { it.roomId == groupId }
-//                item?.let {
-//                    it.lastMessage = chatMessage.text
-//                    adapter.notifyDataSetChanged()
-//                }
-//            }
+            roomList.forEachIndexed { index , room ->
+                if (room._id == toId){
+                    roomList[index].chats.add(chatMessage)
+                    runOnUiThread {
+                        adapter.notifyDataSetChanged()
+                    }
+                }
+            }
         }
 
         binding.buttonAdd.setOnClickListener {
@@ -177,18 +123,17 @@ class ChatListActivity : AppCompatActivity() {
 
     private fun setupRecyclerView() {
         adapter = ChatListAdapter(
-            chatList,
+            roomList,
             this@ChatListActivity,
-            username,
-            groupList
+            username
         )
         binding.rvChatList.layoutManager = LinearLayoutManager(this)
         binding.rvChatList.adapter = adapter
     }
 
     private object CHAT_KEYS {
-        const val NEW_CHAT_PRIVATE = "new_chat_private"
-        const val NEW_CHAT_GROUP = "new_chat_group"
+//        const val NEW_CHAT_PRIVATE = "new_chat_private"
+        const val NEW_CHAT = "new_chat"
         const val PRIVATE_MESSAGE = "private_message"
         const val GROUP_MESSAGE = "group_message"
     }

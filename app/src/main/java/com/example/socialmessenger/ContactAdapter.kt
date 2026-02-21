@@ -34,6 +34,7 @@ class ContactAdapter(
             intentToMainActivity.putExtra("SELF_USERNAME",self_username)
             intentToMainActivity.putExtra("OTHER_USERNAME", conName)
             intentToMainActivity.putExtra("TYPE", "private")
+            intentToMainActivity.putExtra("ID", "")
             activity.startActivity(intentToMainActivity)
         })
     }

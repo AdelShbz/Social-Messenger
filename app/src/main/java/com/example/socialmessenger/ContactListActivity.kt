@@ -58,11 +58,11 @@ class ContactListActivity : AppCompatActivity() {
         })
 
         binding.tvNewGroup.setOnClickListener {
-//            val intent = Intent(this@ContactListActivity, CreateGroupActivity::class.java)
-//            intent.putExtra("TOKEN", token)
-//            intent.putExtra("USERNAME", self_username)
-//            startActivity(intent)
-            Toast.makeText(this, "new group", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this@ContactListActivity, CreateGroupActivity::class.java)
+            intent.putExtra("TOKEN", token)
+            intent.putExtra("USERNAME", self_username)
+            startActivity(intent)
+//            Toast.makeText(this, "new group", Toast.LENGTH_SHORT).show()
         }
 
         binding.tvNewChannel.setOnClickListener {
