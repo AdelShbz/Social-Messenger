@@ -1,7 +1,7 @@
 package com.example.socialmessenger
 
+import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -25,6 +25,7 @@ class MainActivity : AppCompatActivity() {
     private val chats = mutableListOf<Chat>()
     lateinit var self_username: String
     lateinit var other_username: String
+    lateinit var ourRoom: Room
     var membersInCL = mutableListOf<ContactList>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,10 +57,10 @@ class MainActivity : AppCompatActivity() {
             socket?.emit(CHAT_KEYS.GET_ROOM, jsonRoom)
             socket?.on(CHAT_KEYS.GET_ROOM) {args ->
                 val data = args[0]
-                val room = Gson().fromJson(data.toString(), Room::class.java) as Room
-                id = room._id
+                ourRoom = Gson().fromJson(data.toString(), Room::class.java) as Room
+                id = ourRoom._id
                 runOnUiThread {
-                    chatList.addAll(room.chats)
+                    chatList.addAll(ourRoom.chats)
                     adapter.notifyDataSetChanged()
                     binding.recyclerView.scrollToPosition(chatList.size - 1)
                 }
@@ -75,10 +76,10 @@ class MainActivity : AppCompatActivity() {
             socket?.emit(CHAT_KEYS.GET_ROOM, jsonRoom)
             socket?.on(CHAT_KEYS.GET_ROOM) {args ->
                 val data = args[0]
-                val room = Gson().fromJson(data.toString(), Room::class.java) as Room
-                id = room._id
+                ourRoom = Gson().fromJson(data.toString(), Room::class.java) as Room
+                id = ourRoom._id
                 runOnUiThread {
-                    chatList.addAll(room.chats)
+                    chatList.addAll(ourRoom.chats)
                     adapter.notifyDataSetChanged()
                     binding.recyclerView.scrollToPosition(chatList.size - 1)
                 }
@@ -129,7 +130,11 @@ class MainActivity : AppCompatActivity() {
 
         if (type != "private") {
             binding.cvMain.setOnClickListener {
-                Toast.makeText(this, "ok", Toast.LENGTH_LONG).show()
+                val intent = Intent(this@MainActivity, RoomInfoActivity::class.java)
+                val ourRoomJson = gson.toJson(ourRoom)
+                intent.putExtra("ROOM", ourRoomJson)
+                intent.putExtra("SELF_USERNAME",self_username)
+                startActivity(intent)
             }
         }
 
