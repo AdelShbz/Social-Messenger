@@ -78,9 +78,13 @@ class ChatListActivity : AppCompatActivity() {
         socket?.connect()
         socket?.on(CHAT_KEYS.NEW_CHAT) {args ->
             val room = Gson().fromJson(args[0].toString(), Room::class.java) as Room
-            roomList.add(room)
-            runOnUiThread {
-                adapter.notifyDataSetChanged()
+            room.members.forEachIndexed { index, member ->
+                if (username == member) {
+                    roomList.add(room)
+                    runOnUiThread {
+                        adapter.notifyDataSetChanged()
+                    }
+                }
             }
         }
 
