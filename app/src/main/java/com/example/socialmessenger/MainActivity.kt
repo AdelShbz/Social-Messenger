@@ -1,6 +1,7 @@
 package com.example.socialmessenger
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -39,15 +40,16 @@ class MainActivity : AppCompatActivity() {
         socket?.connect()
         setupRecyclerView()
         val type = intent.getStringExtra("TYPE").toString()
+        binding.tvTypeMain.text = type
         self_username = intent.getStringExtra("SELF_USERNAME").toString()
         var id = intent.getStringExtra("ID").toString()
         if (type == "group"){
             val roomName = intent.getStringExtra("ROOM_NAME").toString()
+            binding.tvRoomName.text = roomName
             val membersInString = intent.getStringExtra("MEMBERS")
             val typeForConvert = object : TypeToken<MutableList<ContactList>>() {}.type
             membersInCL = gson.fromJson(membersInString, typeForConvert)
             membersInCL.forEach { memberCL -> members.add(memberCL.username) }
-//            members.add(self_username)
             val groupRoles = GroupRoles(self_username)
             val room = Room(id, type, members, chats, roomName, groupRoles)
             val jsonRoom = gson.toJson(room, Room::class.java)
@@ -66,6 +68,7 @@ class MainActivity : AppCompatActivity() {
             other_username = intent.getStringExtra("OTHER_USERNAME").toString()
             members.add(self_username)
             members.add(other_username)
+            binding.tvRoomName.text = other_username
             val privateRoles = GroupRoles("")
             val room = Room(id, type, members, chats,"", privateRoles)
             val jsonRoom = gson.toJson(room, Room::class.java)
@@ -121,6 +124,12 @@ class MainActivity : AppCompatActivity() {
                     adapter.notifyItemInserted(chatList.size - 1)
                     binding.recyclerView.scrollToPosition(chatList.size - 1)
                 }
+            }
+        }
+
+        if (type != "private") {
+            binding.cvMain.setOnClickListener {
+                Toast.makeText(this, "ok", Toast.LENGTH_LONG).show()
             }
         }
 

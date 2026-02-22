@@ -15,6 +15,9 @@
         android:theme="@style/Theme.SocialMessenger"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".RoomInfoActivity"
+            android:exported="false" />
+        <activity
             android:name=".GroupNamingActivity"
             android:exported="false" />
         <activity
